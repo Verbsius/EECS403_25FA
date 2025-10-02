@@ -1,0 +1,12 @@
+S
+3
+// this is a comment
+// test: cat-dot-scw
+// test comments between the words
+cat
+cot
+// another comment
+dot
+
+
+

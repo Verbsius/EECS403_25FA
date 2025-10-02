@@ -1,0 +1,41 @@
+TL Input Errors
+You will always find a number where you expect to find one (though they might be invalid values). To avoid unexpected losses of large amounts of money, you must check for each of the following:
+
+<TIMESTAMP> is non-negative (no one can trade before the market opens)
+Timestamps are non-decreasing
+e.g. 0 cannot come after 1, but there can be multiple orders with the same timestamp
+<TRADER_ID> is in the range [0, <NUM_TRADERS>)
+e.g. if <NUM_TRADERS> is 5, then valid trader IDs are 0, 1, 2, 3, 4
+<STOCK_ID> is in the range [0, <NUM_STOCKS>)
+e.g. if <NUM_STOCKS> is 3, then valid stock IDs are 0, 1, 2
+<PRICE> and <QUANTITY> are both positive
+If you detect an input error at any time during the program, print a helpful message to cerr and exit(1). You do not need to check for input errors not explicitly mentioned here.
+
+
+Detailed Algorithm
+Following these steps in order will help guarantee that your program prints the correct output at the proper times. Details of the output options are be covered in the Output Details section.
+
+Initialize CURRENT_TIMESTAMP to 0, its value is updated throughout the run of the program, and even though the first order may not arrive at timestamp 0, no valid orders can arrive before that time.
+
+Print Startup Output
+Read the next order from input
+If the new order’s TIMESTAMP != CURRENT_TIMESTAMP
+
+a. If the --median/-m option is specified, print the median price of all stocks that have been traded on at least once by this point in ascending order by stock ID (Median Output)
+
+b. Set CURRENT_TIMESTAMP to be the new order’s TIMESTAMP.
+
+Add the new order to the market
+Make all possible matches in the market that now includes the new order (observing the fact that a single incoming order may make matches with multiple existing orders)
+
+a. If a match is made and the --verbose/-v option is specified, print Verbose Output
+
+b. Remove any completed orders from the market
+
+c. Update the share quantity of any partially fulfilled order in the market
+
+Repeat steps 2-5 until there are no more orders
+If the --median/-m flag is set, output final timestamp median information of all stocks that were traded that day (Median Output)
+Print Summary Output
+If the --trader_info/-i flag is set print Trader Info Output
+If the --time_travelers/-t flag is set print Time Travelers Output

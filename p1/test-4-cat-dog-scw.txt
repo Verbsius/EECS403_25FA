@@ -1,0 +1,7 @@
+S
+3
+// test: cat-dog-scw
+// output: no solution
+cat
+dog
+log

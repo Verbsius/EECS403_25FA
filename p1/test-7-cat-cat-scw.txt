@@ -1,0 +1,6 @@
+C
+// test7-cat-cat-scw
+// testing insert each
+1
+[c]at
+

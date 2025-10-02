@@ -1,0 +1,13 @@
+S
+10
+// Test: ship-shot-scw
+chip
+chop
+junk
+leet
+let
+shin
+ship
+shop
+shot
+stop
