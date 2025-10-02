@@ -39,3 +39,65 @@ If the --median/-m flag is set, output final timestamp median information of all
 Print Summary Output
 If the --trader_info/-i flag is set print Trader Info Output
 If the --time_travelers/-t flag is set print Time Travelers Output
+
+If the SELL order arrived first, then the price of the match will be at the price listed by the seller. If the BUY order arrived first, the match price will be the price listed by the buyer.
+并不是直接匹配最低的价格，而是根据sell/buy到达的先后来匹配
+
+
+COMMENT: Spec example, TL mode generating 12 orders.
+MODE: TL
+NUM_TRADERS: 3
+NUM_STOCKS: 2
+0 SELL T1 S0 $100 #44
+1 SELL T2 S0 $56 #42
+2 BUY T1 S0 $73 #19 
+
+2 BUY T2 S0 $34 #50
+
+2 SELL T2 S1 $86 #23
+
+2 SELL T0 S0 $20 #39 20(39 t0)
+
+2 BUY T1 S1 $49 #24 49(24 t1)
+2 SELL T1 S1 $83 #45 83(45 t1)
+3 SELL T0 S1 $64 #22 64(22 t0)
+3 SELL T2 S1 $6 #19 6(19 t2)
+3 SELL T0 S1 $42 #37 42(37 t0)
+4 SELL T1 S0 $10 #44 10(44 t1)
+
+
+stock 0 
+S 10(33 t1) 56(42-19 t2) 100(44 t1) 
+B 
+
+stock 1 
+S 42(37 t0) 64(22 t0) 83(45 t1) 86(23 t2)
+B 
+
+
+processing orders... 
+
+trader 1 purcahsed 19 shares of stock 0 from trader 2 for $56/share
+trader 2 purchased 39 shares of stock 0 from trader 0 for $34/share
+
+
+
+trader 1 purchased 19 shares of stock 1 from trader 2 for $49/share
+trader 1 purchased 5 shares of stock 1 from trader 0 for $49/share
+
+trader 2 purchase 11 shares of stock 0 from trader 1 for $34/share
+
+
+trader completed 5 
+
+
+
+
+
+
+
+
+
+
+
+

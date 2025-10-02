@@ -23,7 +23,7 @@ void Stock::addTraderPrice(int price) {
         upper.pop();
     }
 }
-
+// Return -1 if no prices have been added
 int Stock::getMedian() const {
     if (lower.empty()) return -1;
     
@@ -47,6 +47,10 @@ void Stock::updateTimeTravelerSell(int time, int price) {
         bestSellPrice = price;
         bestSellTime = time;
     }
+}
+
+void Stock::addOrder(const Order& order) {
+    
 }
 
 // ================================= StockMarket Methods ===============================
@@ -89,23 +93,90 @@ void StockMarket::process(istream& in) {
 }
 
 void StockMarket::processOrders(istream& in) {
-    string type;
-    unsigned int timestamp, traderID, stockID, price, quantity;
-    unsigned int currentTime = 0;
+    int currentTime = -1;
+    while (true) {
+        int timestamp, traderID, stockID, price, quantity;
+        string type, traderStr, stockStr, priceStr, qtyStr;
 
-    while (in >> timestamp >> type) {
-        string traderStr, stockStr, priceStr, qtyStr;
-        in >> traderStr >> stockStr >> priceStr >> qtyStr;
+        if (!(in >> timestamp >> type >> traderStr >> stockStr >> priceStr >> qtyStr)) {
+            break; 
+        }
         traderID = stoi(traderStr.substr(1));
         stockID = stoi(stockStr.substr(1));
         price = stoi(priceStr.substr(1));
         quantity = stoi(qtyStr.substr(1));
 
+        // TODO 
         if (timestamp != currentTime) {
             if (medianFlag) {
-                    
+                for (size_t i = 0; i < stocks.size(); i++) {
+                    int medianPrice = stocks[i].getMedian();
+                    if (medianPrice != -1) {
+                        cout << "Median match price of Stock " << i << " at time " << 
+                            timestamp << " is $" << medianPrice << "\n";
+                    }
+                }
             }
+            currentTime = timestamp;
         }
 
+        Order order{type, traderID, stockID, price, quantity, timestamp};
+
+        stocks[stockID].addOrder(order);
+        
+
+    }
+
+
+    if (medianFlag) printMedian();
+
+    printSummary();
+
+    if (traderInfoFlag) printTraderInfo();
+ 
+    if (timeTravelersFlag) printTimeTravelers();
+}
+
+
+void StockMarket::printMedian() const {
+    for (size_t i = 0; i < stocks.size(); i++) {
+        int medianPrice = stocks[i].getMedian();
+        if (medianPrice != -1) {
+            cout << "Median match price of Stock " << i << " at time " << 
+                currentTime << " is $" << medianPrice << "\n";
+        }
+    }
+}
+
+void StockMarket::printSummary() const {
+    cout << "---End of Day---\n" << 
+        "Trades Completed: " << tradesCompleted << "\n";
+}
+
+void StockMarket::printTraderInfo() const {
+    cout << "---Trader Info---\n";
+    for (size_t i = 0; i < traders.size(); i++) {
+        cout << "Trader " << i << ": bought " << traders[i].bought << 
+            " and sold " << traders[i].sold << 
+            " for a net transfer of $" << traders[i].netTransfer << "\n";
+    }
+}
+
+void StockMarket::printTimeTravelers() const {
+    cout << "---Time Travelers---\n";
+    for (size_t i = 0; i < stocks.size(); i++) {
+        const Stock& curStock = stocks[i];
+        if (curStock.bestBuyTime != -1 && curStock.bestSellTime != -1 && 
+                curStock.bestBuyTime < curStock.bestSellTime && 
+                curStock.bestBuyPrice != numeric_limits<int>::max() &&
+                curStock.bestSellPrice != -1 &&
+                curStock.bestSellPrice > curStock.bestBuyPrice) {
+            cout << "A time traveler would buy Stock " << i << " at time " <<
+                curStock.bestBuyTime << " for $" << curStock.bestBuyPrice <<
+                " and sell it at time " << curStock.bestSellTime <<" for $" <<
+                curStock.bestSellPrice << "\n";
+        } else {
+            cout << "A time traveler could not make a profit on Stock " << i << "\n";
+        }
     }
 }

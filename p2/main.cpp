@@ -20,7 +20,6 @@ int main() {
     
     st.process(cin);
 
-    st.printResults();
 
     
     

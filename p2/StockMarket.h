@@ -11,15 +11,15 @@
 using namespace std;
 
 struct Order {
-    char type;          // 'B' = Buy, 'S' = Sell
+    string type;        // Buy or Sell
     int traderID;       // trader ID
     int stockID;        // Stock Id
     int price;          // Price per share
     int quantity;       // Number of shares
     int timestamp;      // Order arrival time
-    int sequence;       // Sequence number to dis
+    int sequence;      
 
-    Order(char t, int td, int s, int p, int q, int ts)
+    Order(string t, int td, int s, int p, int q, int ts)
         : type(t), traderID(td), stockID(s), price(p), quantity(q), timestamp(ts) {}
 };
 
@@ -65,6 +65,7 @@ struct Stock {
     int getMedian() const;
     void updateTimeTravelerBuy(int time, int price);
     void updateTimeTravelerSell(int time, int price);
+    void addOrder(const Order& order);
 
 };
 
@@ -78,6 +79,7 @@ struct Trader {
 class StockMarket {
     private:
 
+        int currentTime = -1; // The current timestamp being processed
         int tradesCompleted = 0; // The number of trades completed
 
         vector<Stock> stocks; // All stocks in the market
@@ -89,6 +91,10 @@ class StockMarket {
         bool traderInfoFlag = false; // Whether to print trader info
         bool timeTravelersFlag = false; // Whether to print time travelers
         void processOrders(istream& in);
+        void printMedian() const;
+        void printSummary() const;
+        void printTraderInfo() const;
+        void printTimeTravelers() const;
         
         
     
