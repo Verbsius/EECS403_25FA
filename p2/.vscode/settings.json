@@ -4,6 +4,7 @@
         "string_view": "cpp",
         "cinttypes": "cpp",
         "iosfwd": "cpp",
-        "sstream": "cpp"
+        "sstream": "cpp",
+        "iostream": "cpp"
     }
 }
