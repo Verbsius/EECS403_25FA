@@ -1,3 +1,4 @@
+// Project Identifier: 0E04A31E0D60C01986ACB20081C9D8722A2519B6
 #include <iostream>
 #include <sstream>
 #include "StockMarket.h"
@@ -49,8 +50,62 @@ void Stock::updateTimeTravelerSell(int time, int price) {
     }
 }
 
-void Stock::addOrder(const Order& order) {
-    
+
+
+void Stock::addAndMatchOrder(const Order& order, bool verboseFlag, 
+        vector<Trader>& traders, int& tradesCompleted){
+    if (order.type == "BUY") {
+        buyOrders.push(order);
+    }
+
+    if (order.type == "SELL") {
+        sellOrders.push(order);
+    }
+
+    while (!buyOrders.empty() && !sellOrders.empty()) {
+
+        Order buyTop = buyOrders.top();
+        Order sellTop = sellOrders.top();
+        if (buyTop.price < sellTop.price) {
+            break; // No match possible
+        }
+        tradesCompleted++;
+
+        int tradePrice = buyTop.sequence < sellTop.sequence ? buyTop.price : sellTop.price;
+
+        int tradeQuantity = min(buyTop.quantity, sellTop.quantity);
+
+        if (verboseFlag) {
+            cout << "Trader " << buyTop.traderID << " purchased " << tradeQuantity << 
+                " shares of Stock " << buyTop.stockID << " from Trader " << sellTop.traderID <<
+                " for $" << tradePrice << "/share\n";
+        }
+
+        buyTop.quantity -= tradeQuantity;
+        sellTop.quantity -= tradeQuantity;
+        buyOrders.pop();
+        sellOrders.pop();
+        if (buyTop.quantity > 0) buyOrders.push(buyTop);
+        if (sellTop.quantity > 0) sellOrders.push(sellTop);
+
+        // Medain related
+        addTraderPrice(tradePrice);
+
+        // Time traveler related
+        updateTimeTravelerBuy(buyTop.timestamp, tradePrice);
+        updateTimeTravelerSell(sellTop.timestamp, tradePrice);
+
+        // Trader related
+        long long totalCost = static_cast<long long>(tradePrice) * tradeQuantity;
+        
+        traders[buyTop.traderID].bought += tradeQuantity;
+        traders[buyTop.traderID].netTransfer -= totalCost;
+        traders[sellTop.traderID].sold += tradeQuantity;
+        traders[sellTop.traderID].netTransfer += totalCost;
+        
+
+        
+    }
 }
 
 // ================================= StockMarket Methods ===============================
@@ -74,7 +129,6 @@ void StockMarket::process(istream& in) {
     stocks.reserve(num_stocks);
     traders.clear();
     traders.reserve(num_traders);
-    tradesCompleted = 0;
 
     stringstream orderStream;
     if(mode_val == "PR") {
@@ -85,7 +139,9 @@ void StockMarket::process(istream& in) {
 
         P2random::PR_init(orderStream, seed, num_traders, num_stocks, num_orders, arrival_rate);
         processOrders(orderStream);
-    } else {
+    } 
+
+    if (mode_val == "TL") {
         processOrders(in);
     }
 
@@ -93,7 +149,6 @@ void StockMarket::process(istream& in) {
 }
 
 void StockMarket::processOrders(istream& in) {
-    int currentTime = -1;
     while (true) {
         int timestamp, traderID, stockID, price, quantity;
         string type, traderStr, stockStr, priceStr, qtyStr;
@@ -101,28 +156,51 @@ void StockMarket::processOrders(istream& in) {
         if (!(in >> timestamp >> type >> traderStr >> stockStr >> priceStr >> qtyStr)) {
             break; 
         }
-        traderID = stoi(traderStr.substr(1));
-        stockID = stoi(stockStr.substr(1));
-        price = stoi(priceStr.substr(1));
-        quantity = stoi(qtyStr.substr(1));
 
-        // TODO 
-        if (timestamp != currentTime) {
-            if (medianFlag) {
-                for (size_t i = 0; i < stocks.size(); i++) {
-                    int medianPrice = stocks[i].getMedian();
-                    if (medianPrice != -1) {
-                        cout << "Median match price of Stock " << i << " at time " << 
-                            timestamp << " is $" << medianPrice << "\n";
-                    }
-                }
-            }
-            currentTime = timestamp;
+        if (timestamp < 0) {
+            cerr << "Error: Negative timestamp\n";
+            exit(1);
         }
 
-        Order order{type, traderID, stockID, price, quantity, timestamp};
+        if (timestamp < currentTime) {
+            cerr << "Error: Decreasing timestamp\n";
+            exit(1);
+        }
 
-        stocks[stockID].addOrder(order);
+        traderID = stoi(traderStr.substr(1));
+        if (traderID < 0 || traderID >= static_cast<int>(traders.size())) {
+            cerr << "Error: Invalid trader ID\n";
+            exit(1);
+        }
+
+        stockID = stoi(stockStr.substr(1));
+        if (stockID < 0 || stockID >= static_cast<int>(stocks.size())) {
+            cerr << "Error: Invalid stock ID\n";
+            exit(1);
+        }
+
+        price = stoi(priceStr.substr(1));
+        if (price <= 0) {
+            cerr << "Error: Invalid price\n";
+            exit(1);
+        }
+
+        quantity = stoi(qtyStr.substr(1));
+        if (quantity <= 0) {
+            cerr << "Error: Invalid quantity\n";
+            exit(1);
+        }
+
+
+    
+        if (timestamp != currentTime) {
+            currentTime = timestamp;
+            if (medianFlag) printMedian();
+        }
+
+        Order order{type, traderID, stockID, price, quantity, timestamp, sequenceNumber++};
+        stocks[stockID].addAndMatchOrder(order, verboseFlag, traders, tradesCompleted);
+        
         
 
     }

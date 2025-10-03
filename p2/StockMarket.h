@@ -1,3 +1,4 @@
+// Project Identifier: 0E04A31E0D60C01986ACB20081C9D8722A2519B6
 #ifndef STOCKMARKET_H
 #define STOCKMARKET_H
 
@@ -17,11 +18,19 @@ struct Order {
     int price;          // Price per share
     int quantity;       // Number of shares
     int timestamp;      // Order arrival time
-    int sequence;      
+    int sequence;       // ascending number to distinguish orders with same timestamp, unique for every order
 
-    Order(string t, int td, int s, int p, int q, int ts)
-        : type(t), traderID(td), stockID(s), price(p), quantity(q), timestamp(ts) {}
+    Order(string t, int td, int s, int p, int q, int ts, int seq)
+        : type(t), traderID(td), stockID(s), price(p), quantity(q), timestamp(ts), sequence(seq) {}
 };
+
+struct Trader {
+    int traderID;
+    int bought = 0;
+    int sold = 0;
+    long long netTransfer = 0; // positive = gained money, negative = spent
+};
+
 
 // Here are custom comparators
 // THe highest-price buyers will be ranked first
@@ -49,36 +58,34 @@ struct Stock {
     priority_queue<Order, vector<Order>, BuyComparator> buyOrders;
     priority_queue<Order, vector<Order>, SellComparator> sellOrders;
 
-    // Median tracking
+    // Median related
     priority_queue<int> lower; // max heap
     priority_queue<int, vector<int>, greater<int>> upper; // min heap
+    void addTraderPrice(int price);
+    int getMedian() const;
 
-
-    // Time traveler tracking
+    // Time traveler related
     int bestSellTime = -1;
     int bestSellPrice = -1;
     int bestBuyTime = -1;
     int bestBuyPrice = numeric_limits<int>::max();
-
-    
-    void addTraderPrice(int price);
-    int getMedian() const;
     void updateTimeTravelerBuy(int time, int price);
     void updateTimeTravelerSell(int time, int price);
-    void addOrder(const Order& order);
+
+
+    // Add order to the corresponding order queue.
+    // match orders and print verbose output if verboseFlag is true 
+    // return true if at least one trade was completed
+    void addAndMatchOrder(const Order& order, bool verboseFlag, 
+            vector<Trader>& traders, int& tradesCompleted);
 
 };
 
-struct Trader {
-    int traderID;
-    int bought = 0;
-    int sold = 0;
-    long long netTransfer = 0; // positive = gained money, negative = spent
-};
 
 class StockMarket {
     private:
 
+        int sequenceNumber = 0; // To distinguish orders with same timestamp
         int currentTime = -1; // The current timestamp being processed
         int tradesCompleted = 0; // The number of trades completed
 
@@ -108,7 +115,6 @@ class StockMarket {
 
         void process(istream& in);
 
-        void printResults();
 };
 
 
