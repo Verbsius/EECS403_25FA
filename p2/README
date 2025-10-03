@@ -98,6 +98,18 @@ trader completed 5
 
 
 
+gdb tutorial
 
-
+Continue: Run until the next breakpoint is reached or until the program
+crashes / finishes
+Step-Over: Next line of code in current function
+Step-In: Next line of code found by trying to step into whatever function is
+being called
+Step-Out: Next line of code found after current function returns
+Restart: Restarts from the beginning of the program
+Stop: Stops debugging and exits the visual debugger
+In the debugging menu on the left, we can see local and global variables.
+We can also create and monitor watch statements. Watch statements are
+any expression that we want to try and evaluate using the local variables.
+Lastly, we can see the call stack.
 

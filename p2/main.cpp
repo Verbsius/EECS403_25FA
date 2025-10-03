@@ -3,6 +3,19 @@
 #include <iostream> 
 #include "StockMarket.h"
 using namespace std;
+
+
+void printHelp() {
+    cout << "Usage: ./market [OPTIONS] < infile > outfile\n"
+         << "Simulates a stock market from order input.\n\n"
+         << "Options:\n"
+         << "  -h, --help            Show this help message and exit\n"
+         << "  -v, --verbose         Print verbose output of trades\n"
+         << "  -m, --median          Print median trade prices by stock at each timestamp\n"
+         << "  -i, --trader_info     Print trader information summary\n"
+         << "  -t, --time_travelers  Print time traveler analysis for each stock\n";
+}
+
 int main(int argc, char* argv[]) {
 
     StockMarket st;
@@ -44,13 +57,3 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 
-void printHelp() {
-    cout << "Usage: ./market [OPTIONS] < infile > outfile\n"
-         << "Simulates a stock market from order input.\n\n"
-         << "Options:\n"
-         << "  -h, --help            Show this help message and exit\n"
-         << "  -v, --verbose         Print verbose output of trades\n"
-         << "  -m, --median          Print median trade prices by stock at each timestamp\n"
-         << "  -i, --trader_info     Print trader information summary\n"
-         << "  -t, --time_travelers  Print time traveler analysis for each stock\n";
-}

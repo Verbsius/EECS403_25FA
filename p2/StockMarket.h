@@ -58,6 +58,9 @@ struct Stock {
     priority_queue<Order, vector<Order>, BuyComparator> buyOrders;
     priority_queue<Order, vector<Order>, SellComparator> sellOrders;
 
+    // TODO: enlarge the memory all the time!!! need to be optimized
+    vector<Order> orderHistory;
+
     // Median related
     priority_queue<int> lower; // max heap
     priority_queue<int, vector<int>, greater<int>> upper; // min heap
@@ -65,12 +68,8 @@ struct Stock {
     int getMedian() const;
 
     // Time traveler related
-    int bestSellTime = -1;
-    int bestSellPrice = -1;
-    int bestBuyTime = -1;
-    int bestBuyPrice = numeric_limits<int>::max();
-    void updateTimeTravelerBuy(int time, int price);
-    void updateTimeTravelerSell(int time, int price);
+
+    void calAndPrintTimetraveler() const;
 
 
     // Add order to the corresponding order queue.

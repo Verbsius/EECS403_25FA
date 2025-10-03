@@ -35,25 +35,49 @@ int Stock::getMedian() const {
     }
 }
 
-void Stock::updateTimeTravelerBuy(int time, int price) {
+void Stock::calAndPrintTimetraveler() const {
+    int buyTime = -1, sellTime = -1, buyPrice = -1, sellPrice = -1, profit = -1;
+    int tempBuyTime = -1, tempBuyPrice = numeric_limits<int>::max();
+    for (const auto& o : orderHistory) {
+        if (o.type == "SELL") {
+            if (o.price < tempBuyPrice) {
+                tempBuyPrice = o.price;
+                tempBuyTime = o.timestamp;
+            }
+        } else {
+            if (tempBuyTime != -1) {
+                int tempProfit = o.price - tempBuyPrice;
+                if (tempProfit > profit) {
+                    profit = tempProfit;
+                    buyPrice = tempBuyPrice;
+                    buyTime = tempBuyTime;
+                    sellPrice = o.price;
+                    sellTime = o.timestamp;
+                }
+            }
+        }
+    }
+
+    if (profit <= 0) {
+        cout << "A time traveler could not make a profit on Stock " << stockID << "\n";
+    } else {
+        cout << "A time traveler would buy Stock " << stockID << " at time " <<
+                buyTime << " for $" << buyPrice <<
+                " and sell it at time " << sellTime <<" for $" <<
+                sellPrice << "\n";
+    }
+
     
-    if (price < bestBuyPrice) {
-        bestBuyPrice = price;
-        bestBuyTime = time;
-    }
 }
-
-void Stock::updateTimeTravelerSell(int time, int price) {
-    if (price > bestSellPrice) {
-        bestSellPrice = price;
-        bestSellTime = time;
-    }
-}
-
 
 
 void Stock::addAndMatchOrder(const Order& order, bool verboseFlag, 
         vector<Trader>& traders, int& tradesCompleted){
+    
+    stockID =order.stockID;
+    // Update order history in case needed to find 
+    orderHistory.push_back(order);
+
     if (order.type == "BUY") {
         buyOrders.push(order);
     }
@@ -91,10 +115,6 @@ void Stock::addAndMatchOrder(const Order& order, bool verboseFlag,
         // Medain related
         addTraderPrice(tradePrice);
 
-        // Time traveler related
-        updateTimeTravelerBuy(buyTop.timestamp, tradePrice);
-        updateTimeTravelerSell(sellTop.timestamp, tradePrice);
-
         // Trader related
         long long totalCost = static_cast<long long>(tradePrice) * tradeQuantity;
         
@@ -125,10 +145,8 @@ void StockMarket::process(istream& in) {
 
     
     // Initialize stocks and traders
-    stocks.clear();
-    stocks.reserve(num_stocks);
-    traders.clear();
-    traders.reserve(num_traders);
+    stocks.resize(num_stocks);
+    traders.resize(num_traders);
 
     stringstream orderStream;
     if(mode_val == "PR") {
@@ -168,13 +186,13 @@ void StockMarket::processOrders(istream& in) {
         }
 
         traderID = stoi(traderStr.substr(1));
-        if (traderID < 0 || traderID >= static_cast<int>(traders.size())) {
+        if (traderID < 0 || traderID >= static_cast<int>(traders.capacity())) {
             cerr << "Error: Invalid trader ID\n";
             exit(1);
         }
 
         stockID = stoi(stockStr.substr(1));
-        if (stockID < 0 || stockID >= static_cast<int>(stocks.size())) {
+        if (stockID < 0 || stockID >= static_cast<int>(stocks.capacity())) {
             cerr << "Error: Invalid stock ID\n";
             exit(1);
         }
@@ -194,11 +212,12 @@ void StockMarket::processOrders(istream& in) {
 
     
         if (timestamp != currentTime) {
-            currentTime = timestamp;
             if (medianFlag) printMedian();
+            currentTime = timestamp;
         }
 
         Order order{type, traderID, stockID, price, quantity, timestamp, sequenceNumber++};
+        // TODO: 
         stocks[stockID].addAndMatchOrder(order, verboseFlag, traders, tradesCompleted);
         
         
@@ -234,7 +253,7 @@ void StockMarket::printSummary() const {
 void StockMarket::printTraderInfo() const {
     cout << "---Trader Info---\n";
     for (size_t i = 0; i < traders.size(); i++) {
-        cout << "Trader " << i << ": bought " << traders[i].bought << 
+        cout << "Trader " << i << " bought " << traders[i].bought << 
             " and sold " << traders[i].sold << 
             " for a net transfer of $" << traders[i].netTransfer << "\n";
     }
@@ -243,18 +262,6 @@ void StockMarket::printTraderInfo() const {
 void StockMarket::printTimeTravelers() const {
     cout << "---Time Travelers---\n";
     for (size_t i = 0; i < stocks.size(); i++) {
-        const Stock& curStock = stocks[i];
-        if (curStock.bestBuyTime != -1 && curStock.bestSellTime != -1 && 
-                curStock.bestBuyTime < curStock.bestSellTime && 
-                curStock.bestBuyPrice != numeric_limits<int>::max() &&
-                curStock.bestSellPrice != -1 &&
-                curStock.bestSellPrice > curStock.bestBuyPrice) {
-            cout << "A time traveler would buy Stock " << i << " at time " <<
-                curStock.bestBuyTime << " for $" << curStock.bestBuyPrice <<
-                " and sell it at time " << curStock.bestSellTime <<" for $" <<
-                curStock.bestSellPrice << "\n";
-        } else {
-            cout << "A time traveler could not make a profit on Stock " << i << "\n";
-        }
+        stocks[i].calAndPrintTimetraveler();
     }
 }
