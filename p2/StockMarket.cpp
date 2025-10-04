@@ -5,10 +5,8 @@
 #include "P2random.h"
 using namespace std;
 
-
-// ================================= Stock Methods ===============================
-
-void Stock::addTraderPrice(int price) {
+// ================================= MedianTracker  ===============================
+void MedianTracker::add(int price) {
     if (lower.empty() || price <= lower.top()) {
         lower.push(price);
     } else {
@@ -24,8 +22,7 @@ void Stock::addTraderPrice(int price) {
         upper.pop();
     }
 }
-// Return -1 if no prices have been added
-int Stock::getMedian() const {
+int MedianTracker::get() const {
     if (lower.empty()) return -1;
     
     if (lower.size() == upper.size()) {
@@ -34,31 +31,29 @@ int Stock::getMedian() const {
         return lower.top();
     }
 }
-
-void Stock::calAndPrintTimetraveler() const {
-    int buyTime = -1, sellTime = -1, buyPrice = -1, sellPrice = -1, profit = -1;
-    int tempBuyTime = -1, tempBuyPrice = numeric_limits<int>::max();
-    for (const auto& o : orderHistory) {
-        if (o.type == "SELL") {
-            if (o.price < tempBuyPrice) {
-                tempBuyPrice = o.price;
-                tempBuyTime = o.timestamp;
-            }
-        } else {
-            if (tempBuyTime != -1) {
-                int tempProfit = o.price - tempBuyPrice;
-                if (tempProfit > profit) {
-                    profit = tempProfit;
-                    buyPrice = tempBuyPrice;
-                    buyTime = tempBuyTime;
-                    sellPrice = o.price;
-                    sellTime = o.timestamp;
-                }
+// ================================= TimeTravelerTracker ===============================
+void TimeTravelerTracker::update(const Order& order) {
+    if (order.type == "SELL") {
+        if (order.price < tempBuyPrice) {
+            tempBuyPrice = order.price;
+            tempBuyTime = order.timestamp;
+        }
+    } else {
+        if (tempBuyTime != -1) {
+            int tempProfit = order.price - tempBuyPrice;
+            if (tempProfit > maxProfit) {
+                maxProfit = tempProfit;
+                buyTime = tempBuyTime;
+                buyPrice = tempBuyPrice;
+                sellTime = order.timestamp;
+                sellPrice = order.price;
             }
         }
-    }
 
-    if (profit <= 0) {
+    }
+}
+void TimeTravelerTracker::print(int stockID) const {
+    if (maxProfit <= 0) {
         cout << "A time traveler could not make a profit on Stock " << stockID << "\n";
     } else {
         cout << "A time traveler would buy Stock " << stockID << " at time " <<
@@ -66,18 +61,31 @@ void Stock::calAndPrintTimetraveler() const {
                 " and sell it at time " << sellTime <<" for $" <<
                 sellPrice << "\n";
     }
-
-    
 }
+// ================================= Stock Methods ===============================
 
 
-void Stock::addAndMatchOrder(const Order& order, bool verboseFlag, 
-        vector<Trader>& traders, int& tradesCompleted){
+
+
+void Stock::addAndMatchOrder(
+        const Order& order, 
+        bool verboseFlag, 
+        bool timeTravelerFlag, 
+        bool medianFlag,
+        bool traderInfoFlag,
+        vector<Trader>& traders, 
+        int& tradesCompleted){
     
-    stockID =order.stockID;
-    // Update order history in case needed to find 
-    orderHistory.push_back(order);
+    // Time traveler related
+    if (timeTravelerFlag) {
+        if (timeTravelerTracker == nullptr) {
+            timeTravelerTracker = new TimeTravelerTracker();
+        }
+        timeTravelerTracker->update(order);
+    }
 
+
+    // Basic order matching
     if (order.type == "BUY") {
         buyOrders.push(order);
     }
@@ -113,15 +121,21 @@ void Stock::addAndMatchOrder(const Order& order, bool verboseFlag,
         if (sellTop.quantity > 0) sellOrders.push(sellTop);
 
         // Medain related
-        addTraderPrice(tradePrice);
+        if (medianFlag) {
+            if (medianTracker == nullptr) {
+                medianTracker = new MedianTracker();
+            }
+            medianTracker->add(tradePrice);
+        }
 
-        // Trader related
-        long long totalCost = static_cast<long long>(tradePrice) * tradeQuantity;
-        
-        traders[buyTop.traderID].bought += tradeQuantity;
-        traders[buyTop.traderID].netTransfer -= totalCost;
-        traders[sellTop.traderID].sold += tradeQuantity;
-        traders[sellTop.traderID].netTransfer += totalCost;
+        // Trader info related
+        if (traderInfoFlag) {
+            long long totalCost = static_cast<long long>(tradePrice) * tradeQuantity;
+            traders[buyTop.traderID].bought += tradeQuantity;
+            traders[buyTop.traderID].netTransfer -= totalCost;
+            traders[sellTop.traderID].sold += tradeQuantity;
+            traders[sellTop.traderID].netTransfer += totalCost;  
+        }
         
 
         
@@ -146,6 +160,10 @@ void StockMarket::process(istream& in) {
     
     // Initialize stocks and traders
     stocks.resize(num_stocks);
+    for (int i = 0; i < num_stocks; i++) {
+        stocks[i].stockID = i;
+    }
+
     traders.resize(num_traders);
 
     stringstream orderStream;
@@ -186,13 +204,13 @@ void StockMarket::processOrders(istream& in) {
         }
 
         traderID = stoi(traderStr.substr(1));
-        if (traderID < 0 || traderID >= static_cast<int>(traders.capacity())) {
+        if (traderID < 0 || traderID >= static_cast<int>(traders.size())) {
             cerr << "Error: Invalid trader ID\n";
             exit(1);
         }
 
         stockID = stoi(stockStr.substr(1));
-        if (stockID < 0 || stockID >= static_cast<int>(stocks.capacity())) {
+        if (stockID < 0 || stockID >= static_cast<int>(stocks.size())) {
             cerr << "Error: Invalid stock ID\n";
             exit(1);
         }
@@ -218,7 +236,15 @@ void StockMarket::processOrders(istream& in) {
 
         Order order{type, traderID, stockID, price, quantity, timestamp, sequenceNumber++};
         // TODO: 
-        stocks[stockID].addAndMatchOrder(order, verboseFlag, traders, tradesCompleted);
+        stocks[stockID].addAndMatchOrder(
+            order, 
+            verboseFlag, 
+            timeTravelersFlag, 
+            medianFlag, 
+            traderInfoFlag,
+            traders,
+            tradesCompleted
+        );
         
         
 
@@ -237,7 +263,8 @@ void StockMarket::processOrders(istream& in) {
 
 void StockMarket::printMedian() const {
     for (size_t i = 0; i < stocks.size(); i++) {
-        int medianPrice = stocks[i].getMedian();
+        if (stocks[i].medianTracker == nullptr) continue;
+        int medianPrice = stocks[i].medianTracker->get();
         if (medianPrice != -1) {
             cout << "Median match price of Stock " << i << " at time " << 
                 currentTime << " is $" << medianPrice << "\n";
@@ -262,6 +289,7 @@ void StockMarket::printTraderInfo() const {
 void StockMarket::printTimeTravelers() const {
     cout << "---Time Travelers---\n";
     for (size_t i = 0; i < stocks.size(); i++) {
-        stocks[i].calAndPrintTimetraveler();
+        if (stocks[i].timeTravelerTracker == nullptr) continue;
+        stocks[i].timeTravelerTracker->print(stocks[i].stockID);
     }
 }

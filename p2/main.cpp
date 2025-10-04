@@ -18,6 +18,8 @@ void printHelp() {
 
 int main(int argc, char* argv[]) {
 
+    std::ios_base::sync_with_stdio(false);
+
     StockMarket st;
     static struct option long_options[] = {
         {"help", no_argument, 0, 'h'},

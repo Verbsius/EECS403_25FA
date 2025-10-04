@@ -1,0 +1,9 @@
+COMMENT: sell before buy, 3 trades completed
+MODE: TL
+NUM_TRADERS: 3
+NUM_STOCKS: 2
+0 SELL T0 S0 $10 #10
+1 BUY T1 S0 $20 #5
+2 SELL T2 S1 $100 #5
+3 BUY T0 S1 $120 #5
+4 BUY T1 S0 $15 #5

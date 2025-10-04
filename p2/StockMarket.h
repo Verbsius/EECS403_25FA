@@ -53,30 +53,59 @@ struct SellComparator {
     }
 };
 
-struct Stock {
-    int stockID;
-    priority_queue<Order, vector<Order>, BuyComparator> buyOrders;
-    priority_queue<Order, vector<Order>, SellComparator> sellOrders;
-
-    // TODO: enlarge the memory all the time!!! need to be optimized
-    vector<Order> orderHistory;
-
-    // Median related
-    priority_queue<int> lower; // max heap
-    priority_queue<int, vector<int>, greater<int>> upper; // min heap
-    void addTraderPrice(int price);
-    int getMedian() const;
-
-    // Time traveler related
-
-    void calAndPrintTimetraveler() const;
 
 
-    // Add order to the corresponding order queue.
-    // match orders and print verbose output if verboseFlag is true 
-    // return true if at least one trade was completed
-    void addAndMatchOrder(const Order& order, bool verboseFlag, 
-            vector<Trader>& traders, int& tradesCompleted);
+class MedianTracker {
+    private:
+        priority_queue<int> lower; // max heap
+        priority_queue<int, vector<int>, greater<int>> upper; // min heap
+    public:
+        void add(int price);
+        int get() const;
+
+};
+
+ class TimeTravelerTracker {
+    private:   
+        int buyTime = -1;
+        int buyPrice = numeric_limits<int>::max();
+        int sellTime = -1;
+        int sellPrice = numeric_limits<int>::min();
+        int maxProfit = 0;
+        int tempBuyTime = -1;
+        int tempBuyPrice = numeric_limits<int>::max();
+    public:
+        void update(const Order& order);
+        void print(int stockID) const;
+};
+
+
+class Stock {
+    public:
+        int stockID;
+        priority_queue<Order, vector<Order>, BuyComparator> buyOrders;
+        priority_queue<Order, vector<Order>, SellComparator> sellOrders;
+
+
+        MedianTracker* medianTracker = nullptr;
+
+        TimeTravelerTracker* timeTravelerTracker = nullptr;
+
+        
+        void addAndMatchOrder(
+            const Order& order, 
+            bool verboseFlag, 
+            bool timeTravelerFlag, 
+            bool medianFlag,
+            bool traderInfoFlag,
+            vector<Trader>& traders, 
+            int& tradesCompleted
+        );
+        ~Stock() {
+            if (medianTracker != nullptr) delete medianTracker;
+            if (timeTravelerTracker != nullptr) delete timeTravelerTracker;
+        }
+    
 
 };
 
@@ -105,7 +134,7 @@ class StockMarket {
         
     
     public:
-        void setHelpFlag(bool val) {helpFlag = val;}
+
         void setVerboseFlag(bool val) {verboseFlag = val;}
         void setMedianFlag(bool val) {medianFlag = val;}
         void setTraderInfoFlag(bool val) {traderInfoFlag = val;}
