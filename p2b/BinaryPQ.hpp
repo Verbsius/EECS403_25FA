@@ -29,9 +29,7 @@ public:
     template<typename InputIterator>
     BinaryPQ(InputIterator start, InputIterator end, COMP_FUNCTOR comp = COMP_FUNCTOR())
         : BaseClass { comp } {
-        // TODO: Implement this function
-        (void)start;  // Delete this line when you implement this function
-        (void)end;  // Delete this line when you implement this function
+        
     }  // BinaryPQ
 
 
@@ -117,7 +115,46 @@ private:
     // NOTE: You are not allowed to add any member variables. You don't need
     //       a "heapSize", since you can call your own size() member
     //       function, or check data.size().
+    static std::size_t getParentIndex(std::size_t index) {
+        return (index - 1) / 2;
+    }
+    static std::size_t getLeftChildIndex(std::size_t index) {
+        return 2 * index + 1;
+    }
 
+
+    void fixUp(std::size_t index) {
+        while (index > 0) {
+            std::size_t parent = getParentIndex(index);
+            if (this->compare(data[parent], data[index])) {
+                std::swap(data[parent], data[index]);
+                index = parent;
+            } else {
+                break;
+            }
+        }
+    }
+
+    void fixDown(std::size_t index) {
+        while(true) {
+            std::size_t left = getLeftChildIndex(index);
+            if (left >= data.size()) {
+                break;
+            }
+            std::size_t right = left + 1;
+            std::size_t child = left;
+            if (right < data.size() && this->compare(data[left], data[right])) {
+                child = right;
+            }
+
+            if (this->compare(data[index], data[child])) {
+                std::swap(data[index], data[child]);
+                index = child;
+            } else {
+                break;
+            }
+        }
+    }
     // TODO: Add any additional member functions you require here.
     //       For instance, you might add fixUp() and fixDown().
 };  // BinaryPQ

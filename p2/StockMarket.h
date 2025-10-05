@@ -24,11 +24,22 @@ struct Order {
         : type(t), traderID(td), stockID(s), price(p), quantity(q), timestamp(ts), sequence(seq) {}
 };
 
-struct Trader {
-    int traderID;
-    int bought = 0;
-    int sold = 0;
-    long long netTransfer = 0; // positive = gained money, negative = spent
+class Trader {
+    private:
+        int traderID;
+        int bought = 0;
+        int sold = 0;
+        long long netTransfer = 0; // positive = gained money, negative = spent
+    public:
+        Trader() = default;
+        Trader(int id) : traderID(id) {}
+        void updateBought(int qty) {bought += qty;}
+        void updateSold(int qty) {sold += qty;}
+        void updateNetTransfer(long long amount) {netTransfer += amount;}
+        int getTraderID() const {return traderID;}
+        int getBought() const {return bought;}
+        int getSold() const {return sold;}
+        long long getNetTransfer() const {return netTransfer;}
 };
 
 
@@ -76,21 +87,31 @@ class MedianTracker {
         int tempBuyPrice = numeric_limits<int>::max();
     public:
         void update(const Order& order);
-        void print(int stockID) const;
+        int getButyTime() const {return buyTime;}
+        int getBuyPrice() const {return buyPrice;}
+        int getSellTime() const {return sellTime;}
+        int getSellPrice() const {return sellPrice;}
+        int getMaxProfit() const {return maxProfit;}
 };
 
 
 class Stock {
-    public:
+    private:
         int stockID;
         priority_queue<Order, vector<Order>, BuyComparator> buyOrders;
         priority_queue<Order, vector<Order>, SellComparator> sellOrders;
 
-
+        Trader* traderTracker = nullptr;
         MedianTracker* medianTracker = nullptr;
-
         TimeTravelerTracker* timeTravelerTracker = nullptr;
-
+    public:
+        Stock() = default;
+        Stock(int id) : stockID(id) {}
+        MedianTracker* getMedianTracker() const {return medianTracker;}
+        TimeTravelerTracker* getTimeTravelerTracker() const {return timeTravelerTracker;}
+        int getStockID() const {return stockID;}
+        void printTimeTraveler() const; 
+        void printMedian() const;
         
         void addAndMatchOrder(
             const Order& order, 
@@ -98,7 +119,7 @@ class Stock {
             bool timeTravelerFlag, 
             bool medianFlag,
             bool traderInfoFlag,
-            vector<Trader>& traders, 
+            vector<Trader>* traders, 
             int& tradesCompleted
         );
         ~Stock() {
@@ -112,13 +133,12 @@ class Stock {
 
 class StockMarket {
     private:
-
         int sequenceNumber = 0; // To distinguish orders with same timestamp
         int currentTime = -1; // The current timestamp being processed
         int tradesCompleted = 0; // The number of trades completed
 
         vector<Stock> stocks; // All stocks in the market
-        vector<Trader> traders; // All traders in the market
+        vector<Trader>* traders; // All traders in the market
         
         bool helpFlag = false; // Whether to print help info
         bool verboseFlag = false; // Whether to print verbose info
@@ -135,6 +155,7 @@ class StockMarket {
     
     public:
 
+        int numTraders = 0;
         void setVerboseFlag(bool val) {verboseFlag = val;}
         void setMedianFlag(bool val) {medianFlag = val;}
         void setTraderInfoFlag(bool val) {traderInfoFlag = val;}
@@ -142,6 +163,11 @@ class StockMarket {
         
 
         void process(istream& in);
+        ~StockMarket() {
+            if (traders != nullptr) {
+                delete traders;
+            }
+        }
 
 };
 
