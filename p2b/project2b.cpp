@@ -30,7 +30,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
-
+#include <cstdint>
 #include "BinaryPQ.hpp"
 #include "Eecs281PQ.hpp"
 #include "PairingPQ.hpp"
@@ -94,6 +94,12 @@ void testPrimitiveOperations() {
     assert(eecsPQ.empty());
 
     // TODO: Add more testing here!
+    eecsPQ.push(10);
+    eecsPQ.push(20);
+    eecsPQ.push(15);
+    assert(eecsPQ.top() == 20);
+    eecsPQ.pop();
+    assert(eecsPQ.top() == 15);
 
     std::cout << "testPrimitiveOperations succeeded!" << std::endl;
 } // testPrimitiveOperations()
@@ -253,6 +259,15 @@ int main() {
     switch (pqType) {
     case PQType::Unordered:
         testPriorityQueue<UnorderedPQ>();
+        break;
+    case PQType::Sorted:
+        testPriorityQueue<SortedPQ>();
+        break;
+    case PQType::Binary:
+        testPriorityQueue<BinaryPQ>();
+        break;
+    case PQType::Pairing:
+        testPriorityQueue<PairingPQ>();
         break;
     default:
         std::cout << "Unrecognized PQ type " << pqType << " in main.\n"

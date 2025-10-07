@@ -28,7 +28,8 @@ public:
     // Runtime: O(n) where n is number of elements in range.
     template<typename InputIterator>
     BinaryPQ(InputIterator start, InputIterator end, COMP_FUNCTOR comp = COMP_FUNCTOR())
-        : BaseClass { comp } {
+        : BaseClass { comp }, data {start, end} {
+        updatePriorities();
         
     }  // BinaryPQ
 
@@ -54,15 +55,23 @@ public:
     //              'rebuilds' the heap by fixing the heap invariant.
     // Runtime: O(n)
     virtual void updatePriorities() {
-        // TODO: Implement this function.
+        // bottem-up and fixDown, starting from the last internal node 
+        if (data.size() <= 1) return;
+        
+        if (!data.empty()) {
+            for (std::size_t i = getParentIndex(data.size() - 1) + 1; i-- > 0; ) {
+                fixDown(i);
+            }
+        }
+        
     }  // updatePriorities()
 
 
     // Description: Add a new element to the PQ.
     // Runtime: O(log(n))
     virtual void push(const TYPE &val) {
-        // TODO: Implement this function.
-        (void)val;  // Delete this line when you implement this function
+        data.push_back(val);
+        fixUp(data.size() - 1);
     }  // push()
 
 
@@ -73,7 +82,13 @@ public:
     // familiar with them, you do not need to use exceptions in this project.
     // Runtime: O(log(n))
     virtual void pop() {
-        // TODO: Implement this function.
+        if (data.size() == 1) {
+            data.pop_back();
+            return;
+        }
+        std::swap(data.front(), data.back());
+        data.pop_back();
+        fixDown(0);
     }  // pop()
 
 
@@ -83,29 +98,24 @@ public:
     //              that might make it no longer be the most extreme element.
     // Runtime: O(1)
     virtual const TYPE &top() const {
-        // TODO: Implement this function.
-
-        // These lines are present only so that this provided file compiles.
-        static TYPE temp;  // TODO: Delete this line
-        return temp;  // TODO: Delete or change this line
+        
+        return data.front();
     }  // top()
 
 
     // Description: Get the number of elements in the PQ.
     // Runtime: O(1)
     [[nodiscard]] virtual std::size_t size() const {
-        // TODO: Implement this function. Might be very simple,
-        // depending on your implementation.
-        return 0;  // TODO: Delete or change this line
+
+        return data.size(); 
     }  // size()
 
 
     // Description: Return true if the PQ is empty.
     // Runtime: O(1)
     [[nodiscard]] virtual bool empty() const {
-        // TODO: Implement this function. Might be very simple,
-        // depending on your implementation.
-        return true;  // TODO: Delete or change this line
+
+        return data.empty();
     }  // empty()
 
 

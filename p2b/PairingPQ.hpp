@@ -42,6 +42,7 @@ public:
         Node *child = nullptr;
         Node *sibling = nullptr;
         // TODO: Add and initialize one extra pointer (parent or previous) as desired.
+        Node *parent = nullptr;
     };  // Node
 
 
@@ -49,8 +50,9 @@ public:
     //              comparison functor.
     // Runtime: O(1)
     explicit PairingPQ(COMP_FUNCTOR comp = COMP_FUNCTOR())
-        : BaseClass { comp } {
-        // TODO: Implement this function.
+        : BaseClass { comp }, root {nullptr}, count {0} {
+        
+        
     }  // PairingPQ()
 
 
@@ -59,20 +61,36 @@ public:
     // Runtime: O(n) where n is number of elements in range.
     template<typename InputIterator>
     PairingPQ(InputIterator start, InputIterator end, COMP_FUNCTOR comp = COMP_FUNCTOR())
-        : BaseClass { comp } {
-        // TODO: Implement this function.
-        (void)start;  // Delete this line when you implement this function
-        (void)end;  // Delete this line when you implement this function
+        : BaseClass { comp },  root {nullptr}, count {0} {
+        for (auto it = start; it != end; it++) {
+            addNode(*it);
+        }
     }  // PairingPQ()
 
 
     // Description: Copy constructor.
     // Runtime: O(n)
     PairingPQ(const PairingPQ &other)
-        : BaseClass { other.compare } {
-        // TODO: Implement this function.
-        // NOTE: The structure does not have to be identical to the original,
-        //       but it must still be a valid pairing heap.
+        : BaseClass { other.compare }, root {nullptr}, count (0) {
+        if (!other.root) return;
+
+        std::deque<Node*> q;
+        q.push_back(other.root);
+
+        while(!q.empty()) {
+            Node* cur = q.front();
+            q.pop_front();
+
+            addNode(cur->elt);
+            
+            if (cur->child) q.push_back(cur->child);
+            if (cur->sibling) q.push_back(cur->sibling);
+
+       
+
+            
+        }
+
     }  // PairingPQ()
 
 
@@ -82,8 +100,16 @@ public:
         // TODO: Implement this function.
         // HINT: Use the copy-swap method from the "Arrays and Containers"
         // lecture.
-        (void)rhs;  // Delete this line when you implement this function
+        if (this == &rhs) return *this;
+        PairingPQ temp(rhs);
+        std::swap(this->root, temp.root);
+        std::swap(this->count, temp.count);
+        std::swap(this->compare, temp.compare);
+
         return *this;
+
+
+        
     }  // operator=()
 
 
@@ -91,11 +117,25 @@ public:
     // Runtime: O(n)
     ~PairingPQ() {
         // TODO: Implement this function.
-        ;  // Delete this line, it prevents linter complaints
+        if (!root) return;
+        std::deque<Node*> stack;
+        stack.push_back(root);
+        while (!stack.empty()) {
+            Node* node = stack.back();
+            stack.pop_back();
+
+            if (node->child) stack.push_back(node->child);
+            if (node->sibling) stack.push_back(node->sibling);
+            delete(node);
+        }
+
+        root = nullptr;
+
+        count = 0;
     }  // ~PairingPQ()
 
 
-    // Description: Move constructor and assignment operators don't need any
+    // Description: Move constructor and assignment operatos don't need any
     //              code, the members will be reused automatically.
     PairingPQ(PairingPQ &&) noexcept = default;
     PairingPQ &operator=(PairingPQ &&) noexcept = default;
@@ -108,6 +148,29 @@ public:
     // Runtime: O(n)
     virtual void updatePriorities() {
         // TODO: Implement this function.
+        if (!root) return;
+
+        std::deque<Node*> queue;
+        queue.push_back(root);
+        root = nullptr;
+        
+        while (!queue.empty()) {
+            Node* cur = queue.front();
+            queue.pop_front();
+
+            // bfs
+            if (cur->child) queue.push_back(cur->child);
+            if (cur->sibling) queue.push_back(cur->sibling);
+
+            // break cons
+            cur->parent = nullptr;
+            cur->sibling = nullptr;
+            cur->child = nullptr;
+
+            // meld
+            root = meld(root, cur);
+
+        }
     }  // updatePriorities()
 
 
@@ -128,6 +191,38 @@ public:
     // Runtime: Amortized O(log(n))
     virtual void pop() {
         // TODO: Implement this function.
+        // Step1: break down all connections to root
+        if (!root) return;
+
+        Node* oldRoot = root;
+        Node* child = root->child;
+
+        std::deque<Node*> queue;
+
+        while(child) {
+            Node* next = child->sibling;
+            child->parent = nullptr;
+            child->sibling = nullptr;
+            queue.push_back(child);
+            child = next;
+        }
+
+        delete(oldRoot);
+        count--;
+
+        // Step2: meld all children
+        while (queue.size() > 1) {
+            Node* first = queue.front(); 
+            queue.pop_front();
+            Node* second = queue.front();
+            queue.pop_front();
+            
+            queue.push_back(meld(first, second));
+        }
+
+        root = queue.empty() ? nullptr : queue.front();
+
+        
     }  // pop()
 
 
@@ -139,25 +234,21 @@ public:
     // Runtime: O(1)
     virtual const TYPE &top() const {
         // TODO: Implement this function
-
-        // These lines are present only so that this provided file compiles.
-        static TYPE temp;  // TODO: Delete this line
-        return temp;  // TODO: Delete or change this line
+        return root->getElt();
     }  // top()
-
 
     // Description: Get the number of elements in the pairing heap.
     // Runtime: O(1)
     [[nodiscard]] virtual std::size_t size() const {
         // TODO: Implement this function
-        return 0;  // TODO: Delete or change this line
+        return count;
     }  // size()
 
     // Description: Return true if the pairing heap is empty.
     // Runtime: O(1)
     [[nodiscard]] virtual bool empty() const {
         // TODO: Implement this function
-        return true;  // TODO: Delete or change this line
+        return root == nullptr;
     }  // empty()
 
 
@@ -171,8 +262,30 @@ public:
     // Runtime: As discussed in reading material.
     void updateElt(Node *node, const TYPE &new_value) {
         // TODO: Implement this function
-        (void)node;  // Delete this line when you implement this function
-        (void)new_value;  // Delete this line when you implement this func
+        node->elt = new_value;
+        
+        if (node == root) return;
+        
+        // break the node's cons
+        Node* parent = node->parent;
+        if (this->compare(parent->elt, node->elt)) {
+            if (parent->child == node) {
+                parent->child = node->sibling;
+            } else {
+                Node* cur = parent->child;
+                while(cur->sibling != node) {
+                    cur = cur->sibling;
+                }
+                cur->sibling = node->sibling;
+            }
+        }
+        node->parent = nullptr;
+        node->sibling = nullptr;
+
+        // meld node and root
+        root = meld(root, node);
+
+        
     }  // updateElt()
 
 
@@ -184,9 +297,10 @@ public:
     //       until it is eliminated by the user calling pop(). Remember this
     //       when you implement updateElt() and updatePriorities().
     Node *addNode(const TYPE &val) {
-        // TODO: Implement this function
-        (void)val;  // Delete this line when you implement this function
-        return nullptr;  // TODO: Delete or change this line
+        Node* nNode = new Node(val);
+        root = meld(root, nNode);
+        count++;
+        return nNode;
     }  // addNode()
 
 
@@ -195,11 +309,35 @@ private:
     // require here.
     // TODO: We recommend creating a 'meld' function (see the Pairing Heap
     // papers).
+    Node* root; // 
+    std::size_t count; // The number of nodes
 
-    // NOTE: For member variables, you are only allowed to add a "root
-    //       pointer" and a "count" of the number of nodes. Anything else
-    //       (such as a deque) should be declared inside of member functions
-    //       as needed.
+
+    // Time Com: O(1)
+    Node* meld(Node* a, Node* b) {
+        if (!a) return b;
+        if (!b) return a;
+
+        if (this->compare(a->elt, b->elt)) {
+            // b is more extreme, so attach a as the first child of b
+            a->sibling = b->child;
+            b->child = a;
+            a->parent = b;
+            return b;
+            
+        } else {
+            // a has higher priority so attach b as the first child of a
+            b->sibling = a->child;
+            a->child = b;
+            b->parent = a;
+
+            return a;
+        }
+    }
+
+    
+
+
 };
 
 
