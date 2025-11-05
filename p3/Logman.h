@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 
 struct LogEntry {
@@ -17,8 +18,23 @@ struct LogEntry {
 
 class Logman {
 private:
-    std::vector<LogEntry> masterLog;  // 
+    // Store the original data in Log when loading
+    std::vector<LogEntry> masterLogList;  
 
+    // Store the list of indices in masterLog for user edit commend
+    std::vector<size_t> excerptList;
+
+    // Store indices for each category in hash table when loading 
+    std::unordered_map<std::string, std::vector<size_t>> categoryMap;
+
+    // Store the index in masterLog corresponding to each keyword when loading
+    std::unordered_map<std::string, std::vector<size_t>> keywordMap;
+    
+    // Store the index of entry sorted by timestamp ascendingly
+    std::vector<size_t> sortedByTimestamp; 
+
+    // Store the most recent search results
+    std::vector<size_t> lastSearchReuslt;
 
 private:
     void timestampsSearch(std::string args);
@@ -41,7 +57,7 @@ public:
     Logman() = default;
     
     // Read Master Log and store 
-    bool loadMasterLog(const std::string& filename);
+    bool loadFile(const std::string& filename);
 
     void run();
 

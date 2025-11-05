@@ -6,7 +6,7 @@
 #include "Logman.h"
 
 
-int64_t timestampToInt64(const std::string& ts) {
+int64_t timestampStringToInt64(const std::string& ts) {
     int64_t val = 0;
     for (char c : ts) {
         if (c != ':') {
@@ -16,7 +16,7 @@ int64_t timestampToInt64(const std::string& ts) {
     return val;
 }
 
-std::string timestampToString(int64_t val) {
+std::string timestampInt64ToString(int64_t val) {
     std::string digits = std::to_string(val);
     // Ensure leading zeros if needed (since mm, dd, hh, mm, ss are always two digits)
     digits.insert(digits.begin(), 10 - digits.size(), '0');
@@ -37,7 +37,8 @@ struct LogEntryComparator {
     }
 };
 
-bool Logman::loadMasterLog(const std::string& filename) {
+
+bool Logman::loadFile(const std::string& filename) {
     std::ifstream infile(filename);
     if (!infile.is_open()) {
         std::cerr << "Error: Could not open file " << filename << std::endl;
@@ -51,18 +52,19 @@ bool Logman::loadMasterLog(const std::string& filename) {
         size_t p1 = line.find('|');
         size_t p2 = line.find('|', p1 + 1);
 
-        int64_t timestamp = timestampToInt64(line.substr(0, p1));
+        int64_t timestamp = timestampStringToInt64(line.substr(0, p1));
         std::string category = line.substr(p1 + 1, p2 - p1 - 1);
         std::string message = line.substr(p2 + 1);
 
         
-        masterLog.emplace_back(id++, timestamp, category, message);
+        masterLogList.emplace_back(id++, timestamp, category, message);
     }
-    // Sort the master log based on timestamp
-    std::sort(masterLog.begin(), masterLog.end(), LogEntryComparator());
 
-    
-    std::cout << masterLog.size() << " entries read" << std::endl;
+    // Inialize sortedByTimestamp
+    sortedByTimestamp.resize(masterLogList.size());
+
+    // 
+    std::cout << masterLogList.size() << " entries read" << std::endl;
 }
 
 void Logman::run() {
@@ -117,25 +119,7 @@ void Logman::run() {
 }
 
 void Logman::timestampsSearch(std::string args){
-    // get args
-    size_t sep = args.find('|');
-    if (sep == std::string::npos) {
-        std::cerr << "Error: Invalid format. Expected <timestamp1>|<timestamp2>\n";
-        return;
-    }
 
-    std::string first = args.substr(0, sep);
-    std::string second = args.substr(sep + 1);
-
-    int64_t firstInt = timestampToInt64(first);
-    int64_t secondInt = timestampToInt64(second);
-    
-    auto lower = std::lower_bound(masterLog.begin(), masterLog.end(), firstInt, LogEntryComparator());
-    auto upper = std::lower_bound(masterLog.begin(), masterLog.end(), secondInt, LogEntryComparator());
-    
-    size_t cnt = static_cast<size_t>(std::distance(lower, upper));
-
-    // add to lastSearchResults 
 
 
 }
