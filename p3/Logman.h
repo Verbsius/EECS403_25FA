@@ -1,3 +1,7 @@
+// Project Identifier: 01BD41C3BF016AD7E8B6F837DF18926EC3251350
+// P3 for EECS281
+// Author: ee
+// Date: 11/5/2025
 #ifndef LOGMAN_H
 #define LOGMAN_H
 
@@ -36,6 +40,8 @@ private:
     // Store the most recent search results
     std::vector<size_t> lastSearchReuslt;
 
+    
+
 private:
     void timestampsSearch(std::string args);
     void matchingSearch(std::string args);
@@ -48,10 +54,27 @@ private:
     void moveToEnd(std::string args);
     void sortExcerptList();
     void clearExcerptList();
-    void printMostRecentSearchResults();
+    void printLastSearchResults();
     void printExcerptList();
 
-    
+    // Helper functions
+    // Transform in to all lower-case string
+    std::string toLowerString(const std::string& in) ;
+
+    // Transform timestamp in string to int64
+    int64_t timestampStringToInt64(const std::string& ts) const;
+
+    // Transform timestamp in int64 to string
+    std::string timestampInt64ToString(const int64_t val) const;
+
+    // Parse keyword from input and store unique key in keyMap
+    void parseKeyword(const std::string& in); 
+
+    // Print a single line of excerpt list
+    void printExcerptEntry(size_t id) const;
+
+    // Print a line of master log list
+    void printMasterEntry(size_t id) const;
 public:
 
     Logman() = default;
