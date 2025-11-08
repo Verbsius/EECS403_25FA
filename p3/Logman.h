@@ -39,8 +39,8 @@ private:
     // Store the index of entry sorted by timestamp ascendingly
     std::vector<size_t> sortedByTimestamp; 
 
-    // Store the most recent search results
-    std::vector<size_t> lastSearchReuslt;
+    // Point to the most recent search results.  
+    std::vector<size_t>* lastSearchResult = nullptr;
 
     
 
@@ -85,6 +85,10 @@ public:
     bool load(const std::string& filename);
 
     void run();
+    
+    ~Logman() {
+        delete lastSearchResult;
+    }
 
     
 

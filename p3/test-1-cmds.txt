@@ -1,0 +1,18 @@
+# This is the Spec Test!
+# Test error handling in spec
+r
+g
+p
+z 
+g
+r
+a 10000
+b 10000
+d 10000
+e 10000
+l
+t 01:07:08:12:00|04:25:21:54:21
+r
+g
+p
+q

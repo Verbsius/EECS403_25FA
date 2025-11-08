@@ -150,6 +150,7 @@ void Logman::run() {
         } 
 
         std::cout << "% ";
+        std::cin >> std::ws;
         if (!std::getline(std::cin, line)) {
             std::cerr << "cannot get a line from cin" << std::endl;
             exit(1);
@@ -196,6 +197,10 @@ void Logman::run() {
                 appendLogEntry(args);
                 break;
             case 'r':
+                if (!lastSearchResult) {
+                    std::cerr << "Error: no previous search results to append" << std::endl;
+                    break;
+                }       
                 appendSearchEntry();
                 break;
             case 'd':
@@ -214,6 +219,10 @@ void Logman::run() {
                 clearExcerptList();
                 break;
             case 'g':
+                if (!lastSearchResult) {
+                    std::cerr << "Error: no previous search results to print" << std::endl;
+                    break;
+                }  
                 printLastSearchResults();
                 break;
             case 'p':
@@ -222,7 +231,7 @@ void Logman::run() {
             case 'q':
                 return; // quit program
             default:
-                // ignore unknown commands
+                std::cerr << "Error: unknown commend '" << cmd << "'" << std::endl; 
                 break;
         }
 
@@ -231,13 +240,23 @@ void Logman::run() {
 
 void Logman::timestampsSearch(std::string args){
     size_t barPos = args.find('|');
+    if (barPos == std::string::npos) {
+        std::cerr << "Error: missing | separator in timestamp search" << std::endl;
+        return;
+    }
     std::string startStr = args.substr(0, barPos);
     std::string endStr = args.substr(barPos + 1);
 
+    if (startStr.size() != 14 || endStr.size() != 14) {
+        std::cerr << "Error: timestamps must be 14 characters long" << std::endl;
+        return;
+    }
     int64_t startTimestamp = timestampStringToInt64(startStr);
     int64_t endTimestamp = timestampStringToInt64(endStr);
 
-    lastSearchReuslt.clear();
+    std::vector<size_t> results;
+    delete lastSearchResult;
+    lastSearchResult = nullptr;
 
     auto lower = std::lower_bound(
         sortedByTimestamp.begin(), sortedByTimestamp.end(), startTimestamp,
@@ -254,10 +273,13 @@ void Logman::timestampsSearch(std::string args){
     );
 
     for (auto it = lower; it != upper; it++) {
-        lastSearchReuslt.push_back(*it);
+        results.push_back(*it);
     }
 
-    std::cout << "Timestamps search: " << lastSearchReuslt.size() << " entries found" << std::endl;
+
+    lastSearchResult = new std::vector<size_t>(std::move(results));
+
+    std::cout << "Timestamps search: " << lastSearchResult->size() << " entries found" << std::endl;
 
 }
 
@@ -266,7 +288,10 @@ void Logman::matchingSearch(std::string args){
 
     int64_t targetTime = timestampStringToInt64(args);
 
-    lastSearchReuslt.clear();
+    delete lastSearchResult;
+    lastSearchResult = nullptr;
+
+    std::vector<size_t> results;
 
     auto lower = std::lower_bound(
         sortedByTimestamp.begin(), sortedByTimestamp.end(), targetTime,
@@ -283,20 +308,30 @@ void Logman::matchingSearch(std::string args){
     );
 
     for (auto it = lower; it != upper; it++) {
-        lastSearchReuslt.push_back(*it);
+        results.push_back(*it);
     }
 
-    std::cout << "Timestamps search: " << lastSearchReuslt.size() << " entries found" << std::endl;
+  
+    lastSearchResult = new std::vector<size_t>(std::move(results));
+    std::cout << "Timestamp search: " << lastSearchResult->size() << " entries found" << std::endl;
 
 }
 
 void Logman::categorySearch(std::string args) {
     std::string catLow = toLowerString(args);
-    lastSearchReuslt.clear();
+    
+    std::vector<size_t> results;
+    delete lastSearchResult;
+    lastSearchResult = nullptr;
+
     if (categoryMap.count(catLow)) {
-        lastSearchReuslt = categoryMap[catLow];
+        results = categoryMap[catLow];
     }
-    std::cout << "Category search: " << lastSearchReuslt.size() << " entries found" << std::endl;
+
+  
+
+    lastSearchResult = new std::vector<size_t>(std::move(results));
+    std::cout << "Category search: " << lastSearchResult->size() << " entries found" << std::endl;
 
 }
 
@@ -315,24 +350,33 @@ void Logman::keywordSearch(std::string args) {
     }
     if (!token.empty()) keywords.push_back(toLowerString(token));
 
-    lastSearchReuslt.clear();
-    if (keywords.empty()) return;
+    std::vector<size_t> result;
+    delete lastSearchResult;
+    lastSearchResult = nullptr;
 
 
+
+
+    // First keyword can not be found
     if (!keywordMap.count(keywords[0])) {
+        lastSearchResult = new std::vector<size_t>(std::move(result));
         std::cout << "Keyword search: 0 entries found" << std::endl;
+        
         return;
     }
 
 
-    std::vector<size_t> result = keywordMap[keywords[0]];
+    result = keywordMap[keywords[0]];
 
 
     for (size_t i = 1; i < keywords.size(); ++i) {
         auto it = keywordMap.find(keywords[i]);
+        // When one of remaining keyword can not be found  
         if (it == keywordMap.end()) {
             result.clear();
-            break;  
+            lastSearchResult = new std::vector<size_t>(std::move(result));
+            std::cout << "Keyword search: 0 entries found" << std::endl;
+            return;  
         }
 
         std::vector<size_t> temp;
@@ -343,11 +387,13 @@ void Logman::keywordSearch(std::string args) {
             SortedByTimeComparator(masterLogList)
         );
         result.swap(temp);
-        if (result.empty()) break; 
     }
 
-    lastSearchReuslt = std::move(result);
-    std::cout << "Keyword search: " << lastSearchReuslt.size() << " entries found" << std::endl;
+
+
+    // 
+    lastSearchResult = new std::vector<size_t>(std::move(result));
+    std::cout << "Keyword search: " << lastSearchResult->size() << " entries found" << std::endl;
 }
 
 void Logman::appendLogEntry(std::string args) {
@@ -363,7 +409,7 @@ void Logman::appendLogEntry(std::string args) {
 
     if (entryID >= masterLogList.size()) {
 
-        std::cerr << "ERROR: invalid entryID" << std::endl;
+        std::cerr << "Error: invalid entryID" << std::endl;
         return; 
     }
 
@@ -372,17 +418,19 @@ void Logman::appendLogEntry(std::string args) {
     std::cout << "log entry " << entryID << " appended" << std::endl;
 }
 void Logman::appendSearchEntry() {
-    if (lastSearchReuslt.empty()) {
-        return;
-    }
-    excerptList.insert(excerptList.end(), lastSearchReuslt.begin(), lastSearchReuslt.end());
-    std::cout << lastSearchReuslt.size() << " log entries appended" << std::endl;
+    excerptList.insert(excerptList.end(), lastSearchResult->begin(), lastSearchResult->end());
+    std::cout << lastSearchResult->size() << " log entries appended" << std::endl;
 }
 void Logman::deleteLogEntry(std::string args){
     size_t start = args.find_first_not_of(" \t");
     size_t end = args.find_last_not_of(" \t");
     std::string trimmed = args.substr(start, end - start + 1);
     size_t excerptIdx = std::stoul(trimmed);
+
+    if (excerptIdx >= excerptList.size()) {
+        std::cerr << "Error: invalid excerpt list index" << std::endl;
+        return; 
+    }
 
     excerptList.erase(excerptList.begin() + excerptIdx);
     std::cout << "Deleted excerpt list entry " << excerptIdx << std::endl;
@@ -394,6 +442,10 @@ void Logman::moveToBeginning(std::string args) {
     std::string trimmed = args.substr(start, end - start + 1);
     size_t excerptIdx = std::stoul(trimmed);
 
+    if (excerptIdx >= excerptList.size()) {
+        std::cerr << "Error: invalid excerpt list index" << std::endl;
+        return; 
+    }
     auto entry = excerptList[excerptIdx];
     excerptList.erase(excerptList.begin() + excerptIdx);
     excerptList.insert(excerptList.begin(), entry);
@@ -408,11 +460,17 @@ void Logman::moveToEnd(std::string args) {
     std::string trimmed = args.substr(start, end - start + 1);
     size_t excerptIdx = std::stoul(trimmed);
 
+    if (excerptIdx >= excerptList.size()) {
+        std::cerr << "Error: invalid excerpt list index" << std::endl;
+        return; 
+    }
     auto entry = excerptList[excerptIdx];
     excerptList.erase(excerptList.begin() + excerptIdx);
     excerptList.push_back(entry);
     std::cout << "Moved excerpt list entry " << excerptIdx << std::endl;
 }
+
+
 void Logman::sortExcerptList() {
     std::cout << "excerpt list sorted" << std::endl;
 
@@ -444,18 +502,17 @@ void Logman::clearExcerptList() {
 
     std::cout << "previous contents:" << std::endl;
 
-    printExcerptEntry(excerptList.front());
+    printExcerptEntry(0);
 
     std::cout << "..." << std::endl;
-    printExcerptEntry(excerptList.back());
+    printExcerptEntry(excerptList.size() - 1);
 
     excerptList.clear();
 }
 
 void Logman::printLastSearchResults() {
-    if (lastSearchReuslt.empty()) return;
-    for (size_t i = 0; i < lastSearchReuslt.size(); i++) {
-        printMasterEntry(lastSearchReuslt[i]);
+    for (size_t i = 0; i < lastSearchResult->size(); i++) {
+        printMasterEntry((*lastSearchResult)[i]);
     }
 
 }
