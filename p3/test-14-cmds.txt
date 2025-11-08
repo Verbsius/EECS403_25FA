@@ -1,0 +1,19 @@
+c 09:51:47:23:06
+ r
+g
+k breakdown state client
+c UDP
+g
+k reset state
+l
+r
+c Debug
+c Debug
+d 3
+g
+p
+l
+k debug print
+d 5
+t 06:57:05:15:08|19:06:39:15:06
+q

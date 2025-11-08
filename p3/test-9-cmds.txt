@@ -1,0 +1,19 @@
+c 02:41:12:06:11|18:34:13:21:09
+ r
+k state client
+g
+# small test comment
+d 1
+b 3
+c Auth
+b 2
+l
+c TCP
+# small test comment
+a 0
+d 4
+g
+b 4
+r
+t 16:33:56:31:04|20:53:01:08:04
+q

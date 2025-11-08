@@ -1,0 +1,19 @@
+c client state valid
+ r
+a 7
+g
+e 4
+l
+g
+a 7
+r
+# small test comment
+t 14:25:31:02:02|16:00:55:10:04
+c Kernel
+e 1
+b 5
+m 13:10:54:28:11
+s
+r
+t 09:07:19:06:05|19:00:56:11:05
+q

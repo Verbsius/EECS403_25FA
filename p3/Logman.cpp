@@ -9,7 +9,9 @@
 #include <vector>
 #include <algorithm>
 #include <unordered_set>
+#include <strings.h>
 #include "Logman.h"
+
 
 
 int64_t Logman::timestampStringToInt64(const std::string& ts) const {
@@ -44,6 +46,11 @@ struct SortedByTimeComparator {
         const auto& B = masterLogList[b];
         if (A.timestamp != B.timestamp) {
             return A.timestamp < B.timestamp;
+        }
+
+        int cmp = strcasecmp(A.category.c_str(), B.category.c_str());
+        if (cmp != 0) {
+            return cmp < 0;
         }
         return A.entryID < B.entryID;
     }

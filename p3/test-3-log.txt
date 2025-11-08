@@ -1,0 +1,14 @@
+10:09:03:45:50|TCP|Packet 0x4235124 sent
+10:09:03:45:50|UDP|Datagram 0xA1 received
+10:09:03:45:50|TCP|Packet 0x4235125 acked
+09:15:12:00:00|Clock|Noon 09/15
+09:15:12:00:00|Alarm|Wakeup event triggered
+09:15:12:00:00|Alarm|Backup alarm set
+23:59:59:59:59|System|Shutting down
+00:00:00:00:01|System|Boot sequence start
+00:00:00:00:01|System|Memory check passed
+00:00:00:00:01|Debug|Startup debug info
+15:30:10:10:10|TCP|Connection reset
+15:30:10:10:10|tcp|Connection re-established
+15:30:10:10:10|TCP|Connection re-established
+15:30:10:10:10|tcp|Connection re-established

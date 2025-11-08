@@ -1,0 +1,12 @@
+17:01:25:23:11|Kernel|Process 0xefeff7 updated
+16:17:47:17:07|System|Task 0x62c897 started
+13:51:32:06:02|System|Packet 0x50e58c started
+03:51:18:05:03|Auth|Task 0x1d96e8 started
+23:03:40:14:07|UDP|Module 0x2a77dd received
+01:52:44:23:09|System|Task 0x4dc070 checked
+18:55:58:28:02|System|Packet 0x45848c failed
+03:59:47:13:11|Clock|Task 0x53b934 stopped
+07:13:49:31:10|Alarm|Event 0x66224f updated
+02:24:11:27:07|System|Task 0x908510 failed
+03:57:13:18:01|TCP|Event 0xaf4d72 failed
+15:58:09:07:04|Clock|Task 0x7df289 started

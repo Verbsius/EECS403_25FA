@@ -1,0 +1,15 @@
+22:54:57:26:05|Alarm|Connection 0x210152 received
+18:00:11:13:02|Debug|Connection 0x979feb failed
+16:17:21:03:07|TCP|Signal 0xa99a77 failed
+13:51:47:20:10|Auth|Signal 0x5f1c2c sent
+22:53:59:18:02|Auth|Module 0xeb407c sent
+00:21:49:24:10|UDP|Packet 0xbb87a5 triggered
+15:27:40:02:08|TCP|Task 0xb9dce2 started
+22:16:26:29:11|TCP|Event 0xcef14a sent
+17:04:30:28:10|Kernel|Connection 0xea18a2 failed
+09:28:15:15:12|System|Task 0xa7d4f8 failed
+05:20:43:28:03|Alarm|Process 0xf310ad failed
+03:24:45:20:04|Clock|Alarm 0x14b781 started
+12:02:46:19:03|TCP|Signal 0x658fb5 updated
+07:08:23:03:06|TCP|Signal 0xa0c5e9 received
+00:49:53:05:02|Alarm|Event 0x41456f triggered

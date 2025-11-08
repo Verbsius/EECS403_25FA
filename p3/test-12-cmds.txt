@@ -1,0 +1,19 @@
+c 21:24:26:18:10
+ r
+k print reset
+r
+p
+e 3
+a 5
+l
+m 05:26:34:20:09
+m 10:25:03:14:11
+p
+# small test comment
+m 05:06:01:10:02
+e 2
+r
+a 3
+c Alarm
+c System
+q
