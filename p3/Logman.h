@@ -17,6 +17,8 @@ struct LogEntry {
     std::string category;
     std::string message;
     
+    LogEntry(size_t id, int64_t ts, std::string& c, std::string& m) : entryID(id), timestamp(ts), category(c), message(m) {}
+    
 };
 
 
@@ -79,8 +81,8 @@ public:
 
     Logman() = default;
     
-    // Read Master Log and store 
-    bool loadFile(const std::string& filename);
+    // Open file according to filename load
+    bool load(const std::string& filename);
 
     void run();
 

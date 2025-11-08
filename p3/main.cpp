@@ -33,7 +33,7 @@ int main(int argc, char** argv) {
 
 
         Logman manager;
-        manager.loadFile(logFileName);  
+        manager.load(logFileName);  
         manager.run();
 
         return 0;

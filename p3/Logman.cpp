@@ -53,7 +53,7 @@ std::string Logman::toLowerString(const std::string& in) {
     std::string out;
     out.reserve(in.size());
     for (char c : in) {
-        out += std::tolower((unsigned char)c);
+        out += static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
     } 
     return out;
 }
@@ -61,7 +61,7 @@ std::string Logman::toLowerString(const std::string& in) {
 
 
 
-bool Logman::loadFile(const std::string& filename) {
+bool Logman::load(const std::string& filename) {
     std::ifstream infile(filename);
     if (!infile.is_open()) {
         std::cerr << "Error: Could not open file " << filename << std::endl;
@@ -128,6 +128,12 @@ bool Logman::loadFile(const std::string& filename) {
 
     // Sort sortedByTimestamp based on timestamp in ascending order
     std::sort(sortedByTimestamp.begin(), sortedByTimestamp.end(), SortedByTimeComparator(masterLogList));
+    for (auto& [cat, vec] : categoryMap) {
+        std::sort(vec.begin(), vec.end(), SortedByTimeComparator(masterLogList));
+    }
+    for (auto& [kw, vec] : keywordMap) {
+        std::sort(vec.begin(), vec.end(), SortedByTimeComparator(masterLogList));
+    }
 
     
     std::cout << masterLogList.size() << " entries read" << std::endl;
@@ -143,7 +149,7 @@ void Logman::run() {
             exit(1);
         } 
 
-        std::cout << "%";
+        std::cout << "% ";
         if (!std::getline(std::cin, line)) {
             std::cerr << "cannot get a line from cin" << std::endl;
             exit(1);
@@ -310,26 +316,37 @@ void Logman::keywordSearch(std::string args) {
     if (!token.empty()) keywords.push_back(toLowerString(token));
 
     lastSearchReuslt.clear();
-
     if (keywords.empty()) return;
 
-    // Start with first keyword’s set
-    std::unordered_set<size_t> resultSet(keywordMap[keywords[0]].begin(), keywordMap[keywords[0]].end());
 
-    // Intersect with others
-    for (size_t i = 1; i < keywords.size(); ++i) {
-        std::unordered_set<size_t> currentSet(keywordMap[keywords[i]].begin(), keywordMap[keywords[i]].end());
-        std::unordered_set<size_t> intersection;
-        for (auto id : resultSet) {
-            if (currentSet.count(id)) {
-                intersection.insert(id);
-            }
-        }
-        resultSet.swap(intersection);
+    if (!keywordMap.count(keywords[0])) {
+        std::cout << "Keyword search: 0 entries found" << std::endl;
+        return;
     }
 
-    lastSearchReuslt.assign(resultSet.begin(), resultSet.end());
 
+    std::vector<size_t> result = keywordMap[keywords[0]];
+
+
+    for (size_t i = 1; i < keywords.size(); ++i) {
+        auto it = keywordMap.find(keywords[i]);
+        if (it == keywordMap.end()) {
+            result.clear();
+            break;  
+        }
+
+        std::vector<size_t> temp;
+        std::set_intersection(
+            result.begin(), result.end(),
+            it->second.begin(), it->second.end(),
+            std::back_inserter(temp),
+            SortedByTimeComparator(masterLogList)
+        );
+        result.swap(temp);
+        if (result.empty()) break; 
+    }
+
+    lastSearchReuslt = std::move(result);
     std::cout << "Keyword search: " << lastSearchReuslt.size() << " entries found" << std::endl;
 }
 
@@ -405,26 +422,16 @@ void Logman::sortExcerptList() {
     }
 
     std::cout << "previous ordering:" << std::endl;
-    printExcerptEntry(excerptList.front());
+    printExcerptEntry(0);
     std::cout << "..." << std::endl;
-    printExcerptEntry(excerptList.back());
+    printExcerptEntry(excerptList.size() - 1);
 
-    std::sort(excerptList.begin(), excerptList.end(), 
-        [&](size_t a, size_t b) {
-            const auto& A = masterLogList[a];
-            const auto& B = masterLogList[b];
-
-            if (A.timestamp != B.timestamp)
-                return A.timestamp < B.timestamp;
-            if (A.category != B.category)
-                return A.category < B.category;
-            return A.entryID < B.entryID;
-        });
+    std::sort(excerptList.begin(), excerptList.end(), SortedByTimeComparator(masterLogList));
 
     std::cout << "new ordering:" << std::endl;
-    printExcerptEntry(excerptList.front());
+    printExcerptEntry(0);
     std::cout << "..." << std::endl;
-    printExcerptEntry(excerptList.back());
+    printExcerptEntry(excerptList.size() - 1);
 
 }
 void Logman::clearExcerptList() {
